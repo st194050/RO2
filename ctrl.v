@@ -1,3 +1,5 @@
+`include "riscv_isa_defines.v" 
+
 module ctrl (
     input  wire clk,
     input  wire        res,
@@ -43,10 +45,10 @@ module ctrl (
                 
                 S_DECODE: begin
                     case (opcode)
-                        7'b0110011: state <= S_EXEC_R;
-                        7'b0010011: state <= S_EXEC_I;
-                        7'b0110111: state <= S_EXEC_LUI;
-                        7'b0010111: state <= S_EXEC_AUIPC;
+                        `OPCODE_OP: state <= S_EXEC_R;
+                        `OPCODE_OPIMM: state <= S_EXEC_I;
+                        `OPCODE_LUI: state <= S_EXEC_LUI;
+                        `OPCODE_AUIPC: state <= S_EXEC_AUIPC;
                         default:    state <= S_EXEC_NOP; // Unbekannt -> NOP
                     endcase
                 end
@@ -69,7 +71,7 @@ module ctrl (
         reg_write = 1'b0;
         alu_src_a = 1'b0;
         alu_src_b = 1'b0;
-        wb_sel    = 1'b0;
+        wb_select    = 1'b0;
 
         case (state)
             S_FETCH: begin
@@ -96,7 +98,7 @@ module ctrl (
             end
             
             S_EXEC_LUI: begin
-                wb_sel    = 1'b1; 
+                wb_select = 1'b1; 
                 reg_write = 1'b1;
                 pc_enable = 1'b1;
             end
@@ -119,7 +121,7 @@ module ctrl (
 
     //  ALUOp
     assign alu_op = 
-        (opcode == 7'b0010111) ? 6'b000001  : // AUIPC
+        (opcode == `OPCODE_AUIPC) ? 6'b000001  : // AUIPC
         (funct3 == 3'b000) ? ((opcode == 7'b0110011 && funct7 == 7'b0100000) ? 6'b100001 /*SUB*/ : 6'b000001 /*ADD*/) :
         (funct3 == 3'b001) ? 6'b000101  : // SLL
         (funct3 == 3'b010) ? 6'b001001  : // SLT

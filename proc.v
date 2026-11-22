@@ -1,7 +1,7 @@
 
 // In der Stunde Kommentare auf Bezeichnungen pruefen 
-//  ->Portnamen von REG_DRE_32 und MUX_2x1_32 (v_lib)
-//  -> Opcode Namen aus riscv_isa_defines.v (statt der localparams unten)
+
+`include "riscv_isa_defines.v"
 
 module proc (
     input  wire        clk,
@@ -30,11 +30,7 @@ module proc (
 );
 
     
-    // Opcodes fuer den ImmGen
-    // PRUEFEN: durch Defines aus riscv_isa_defines.v ersetzen
-    localparam [6:0] OP_LUI    = 7'b0110111;
-    localparam [6:0] OP_AUIPC  = 7'b0010111;
-    localparam [6:0] OP_BRANCH = 7'b1100011;
+ 
 
     // Ausgänge für Data Memory
     assign data_req          = 1'b0;
@@ -53,7 +49,7 @@ module proc (
     REG_DRE_32 instruction_register (
         .D(instr_read),
         .RES(res),
-        .E(ir_enable),
+        .ENABLE(ir_enable),
         .CLK(clk),
         .Q(ir_out)
     );
@@ -70,9 +66,9 @@ module proc (
 
     assign imm_ext =
         // U Type (LUI, AUIPC)
-        (opcode == OP_LUI || opcode == OP_AUIPC) ? {ir_out[31:12], 12'b0} :
+        (opcode == `OPCODE_LUI || opcode == `OPCODE_AUIPC) ? {ir_out[31:12], 12'b0} :
         // B Type (Branch), inklusive Shift left 1 
-        (opcode == OP_BRANCH) ? {{19{ir_out[31]}}, ir_out[31], ir_out[7],
+        (opcode == `OPCODE_BRANCH) ? {{19{ir_out[31]}}, ir_out[31], ir_out[7],
                                  ir_out[30:25], ir_out[11:8], 1'b0} :
         // I-Type und Fallback
         {{20{ir_out[31]}}, ir_out[31:20]};
@@ -125,17 +121,17 @@ module proc (
     wire [31:0] alu_in_b;
 
     MUX_2x1_32 mux_a (
-        .D0(read_data_1),    // S=0: rs1
-        .D1(pc_out),         // S=1: PC (AUIPC)
+        .I0(read_data_1),    // S=0: rs1
+        .I1(pc_out),         // S=1: PC (AUIPC)
         .S(alu_src_a),
-        .Q(alu_in_a)
+        .Y(alu_in_a)
     );
 
     MUX_2x1_32 mux_b (
-        .D0(read_data_2),    // S=0: rs2
-        .D1(imm_ext),        // S=1: Direktwert
+        .I0(read_data_2),    // S=0: rs2
+        .I1(imm_ext),        // S=1: Direktwert
         .S(alu_src_b),
-        .Q(alu_in_b)
+        .Y(alu_in_b)
     );
 
     
@@ -155,10 +151,10 @@ module proc (
     wire wb_select;             // vom Steuerwerk
 
     MUX_2x1_32 wb_mux (
-        .D0(alu_q),          // S=0: ALU-Ergebnis
-        .D1(imm_ext),        // S=1: Direktwert (LUI)
+        .I0(alu_q),          // S=0: ALU-Ergebnis
+        .I1(imm_ext),        // S=1: Direktwert (LUI)
         .S(wb_select),
-        .Q(write_data)
+        .Y(write_data)
     );
 
     // Steuerwerk
