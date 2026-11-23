@@ -45,7 +45,7 @@ module proc (
     wire [31:0] ir_out;
     wire        ir_enable;   // vom Steuerwerk
 
-    // PRUEFEN: Portnamen von REG_DRE_32
+    
     REG_DRE_32 instruction_register (
         .D(instr_read),
         .RES(res),
@@ -114,7 +114,7 @@ module proc (
 
     
     // Multiplexer vor der ALU
-    // PRUEFEN: Portnamen von MUX_2x1_32
+    
     wire        alu_src_a;   // vom Steuerwerk
     wire        alu_src_b;   // vom Steuerwerk
     wire [31:0] alu_in_a;
